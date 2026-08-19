@@ -7,5 +7,6 @@ requires-python = ">=3.13"
 dependencies = [
     "groq>=1.6.0",
     "pydantic-ai>=2.31.0",
+    "streamlit>=1.61.1",
     "supabase>=2.31.0",
 ]
