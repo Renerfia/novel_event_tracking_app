@@ -8,7 +8,7 @@ url:str = str(os.environ.get("SUPABASE_URL"))
 public_key:str = str(os.environ.get("SUPABASE_PUBLIC_KEY"))
 admin_key:str = str(os.environ.get("SUPABASE_PRIVATE_KEY"))
 
-@st.cache_data
+@st.cache_resource
 def init_supabase()->Client:
     """Initializes connection with supabase"""
     supabase: Client = create_client(url,public_key)

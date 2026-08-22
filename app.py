@@ -1,12 +1,17 @@
 import streamlit as st
-from tools.supabase import init_supabase,user_sign_in, user_sign_up, get_current_user
+from pages import login_page,chat_page
 
-supabase = init_supabase() #The supabase client object
 
 if "user" not in st.session_state:
     st.session_state.user = None
 
 
 
+
 if st.session_state.user == None:
-    
+    pg = st.navigation([st.Page(login_page,title="login")],)
+
+else:
+    pg = st.navigation([st.Page(chat_page,title="chat")])
+
+pg.run()

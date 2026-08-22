@@ -1,5 +1,6 @@
 import streamlit as st
 from tools.supabase import init_supabase,user_sign_in, user_sign_up, get_current_user
+from agent.agent import get_response
 
 supabase = init_supabase() #The supabase client object
 
@@ -14,9 +15,12 @@ def login_page():
     if st.button("Login"):
         try:
             response = user_sign_in(supabase=supabase, email=email, password=password)
-            st.session_state.user = response.user
-            print("Login successful!")
-            st.rerun()
+            if response and response.user:
+                st.session_state.user = response.user
+                print("Login successful!")
+                st.rerun()
+            else:
+                st.write("Login failed.")
 
         except Exception as e:
             st.error(f"Error:{e}")
@@ -24,9 +28,14 @@ def login_page():
     if st.button("Sign-up"):
         try:
             response = user_sign_up(supabase,email,password)
-            st.session_state.user = response.user
-            print("Sign-up successful!")
-            st.rerun()
+
+            if response and response.user:
+                st.session_state.user = response.user
+                print("Sign-up successful!")
+                st.rerun()
+
+            else:
+                st.error("Sign-up failed.")
 
         except Exception as e:
             st.error(f"Error:{e}")
@@ -39,7 +48,7 @@ def chat_page():
     if not user:
         st.warning("You can't access this page without login.")
 
-    if st.session_state.messages not in st.session_state:
+    if "messages" not in st.session_state:
         st.session_state.messages = [
             {"role":"assistant", "content":f"Hello {user.email}! How can I help you?"}
         ]
@@ -57,5 +66,7 @@ def chat_page():
         with st.chat_message("user"):
             st.write(user_message)
 
+        #LLM response
         with st.chat_message("assistant"):
-            #bot logic here
+            response = get_response(user_message)
+            st.write(response)
