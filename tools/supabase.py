@@ -40,11 +40,31 @@ def user_sign_in(supabase:Client,email,password):
 
 def get_current_user(supabase:Client):
     """Returns user object"""
-    user = supabase.auth.get_user()
-    print("Current User:", user)
-    return user
+    response = supabase.auth.get_user()
+    print("Current User:", response)
+    return response.user
 
 def logout(supabase:Client):
     supabase.auth.sign_out()
     print("Logged out successfully!")
 #End
+
+def create_novel(supabase:Client,novel_name:str):
+    """Create novel"""
+
+    author = get_current_user(supabase)
+
+    if author:
+        author_id = author.id
+
+        try:
+            response = supabase.table("novels").insert(
+                {"novel_name":novel_name,
+                "author_id":author_id}
+            ).execute()
+
+        except Exception as e:
+            print(f"There is something problem with data insertion:{e}")
+
+    else:
+        raise ValueError("author isn't verified.")
