@@ -44,6 +44,7 @@ def novel_list_page():
 
     user = st.session_state.user
 
+    #user verification
     if not user:
         st.warning("You can't access this page without login.")
         return
@@ -64,18 +65,64 @@ def novel_list_page():
 
     st.title("Your Novels")
 
+    #checks if author has existing novel or not
     if not novels:
         st.write("No novel has been found.")
         
 
+    #selected_novel display  logic
     if st.session_state.selected_novel is not None:
         the_novel = st.session_state.selected_novel
 
         st.subheader(f"Novel Name: {the_novel['novel_name']}")
+        novel_id = the_novel["novel_id"]
+        
+
+        #THE CHAPTER LOGIC IS HERE
+        #returns chapters of a novel
+        chapters = supabase.table("chapters").select("*").eq("novel_id",novel_id).execute()
+        chapters = chapters.data #so we get List[dict]
+
+        if not chapters:
+            st.write("There's no chapter of this novel.")
+        if "selected_chapter" not in st.session_state:
+            st.session_state.selected_chapter = None
+
+        if st.session_state.selected_chapter is not None:
+            selected_chapter = st.session_state.selected_chapter
+            with st.container(border=True):
+                
+
+                st.subheader(f"The chapter name:{selected_chapter["chapter_name"]}")
+                st.write("\n",selected_chapter["chapter_content"])
+
+        else:
+            for i, chapter in enumerate(chapters,start=1):
+                with st.container(border=True):
+                    st.title(chapter["name"])
+                    st.write(f"Total length:{len(chapter["chapter_content"])}")
+                    if st.button(label="Open",key=f"chapter {i} button"):
+                        st.session_state.selected_chapter = chapter
+                        st.rerun()
+                        
+
+            with st.container(border=True):
+                st.title("Create a new chapter")
+                chapter_name = st.text_input("chapter name")
+
+                if not chapter_name:
+                    st.warning("Please enter a name")
+
+                pass #for later
+                
+
+        
+
+
         
 
     else:
-        # Display novels as cards/list items
+        # Display novels as cards/list items if not selected_novel
         for novel in novels:
             with st.container(border=True):
                 st.subheader(novel["novel_name"])
@@ -88,6 +135,7 @@ def novel_list_page():
                     st.session_state.selected_novel = novel #here we select our novel
                     st.rerun()
 
+        #create a new novel logic
         with st.container(border=True):
             st.subheader("Create a novel")
             new_novel_name = st.text_input("The novel name")
