@@ -49,22 +49,28 @@ def logout(supabase:Client):
     print("Logged out successfully!")
 #End
 
-def create_novel(supabase:Client,novel_name:str):
-    """Create novel"""
-
+def create_novel(supabase: Client, novel_name: str) -> bool:
+    """Creates a novel entry in Supabase and returns True if successful."""
+    
     author = get_current_user(supabase)
 
-    if author:
-        author_id = author.id
+    if not author:
+        raise ValueError("Author isn't verified.")
 
-        try:
-            response = supabase.table("novels").insert(
-                {"novel_name":novel_name,
-                "author_id":author_id}
-            ).execute()
+    try:
+        response = supabase.table("novels").insert(
+            {
+                "novel_name": novel_name,
+                "author_id": author.id
+            }
+        ).execute()
 
-        except Exception as e:
-            print(f"There is something problem with data insertion:{e}")
+        # Check if Supabase successfully returned the inserted row
+        if response.data:
+            return True
+        return False
 
-    else:
-        raise ValueError("author isn't verified.")
+    except Exception as e:
+        print(f"There is a problem with data insertion: {e}")
+        return False
+

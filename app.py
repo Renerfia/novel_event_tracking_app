@@ -1,5 +1,5 @@
 import streamlit as st
-from pages import login_page,chat_page
+from pages import login_page,chat_page, novel_list_page
 
 
 if "user" not in st.session_state:
@@ -12,6 +12,9 @@ if st.session_state.user == None:
     pg = st.navigation([st.Page(login_page,title="login")],)
 
 else:
-    pg = st.navigation([st.Page(chat_page,title="chat")])
+    pg = st.navigation([st.Page(novel_list_page,title="novels"),
+                        st.Page(chat_page, title = "chat")])
+
+
 
 pg.run()
