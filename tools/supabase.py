@@ -2,6 +2,7 @@ from supabase import create_client, Client
 from dotenv import load_dotenv
 import os
 import streamlit as st
+from agent.agent import get_embeddings
 load_dotenv()
 
 url:str = str(os.environ.get("SUPABASE_URL"))
@@ -49,7 +50,7 @@ def logout(supabase:Client):
     print("Logged out successfully!")
 #End
 
-def create_novel(supabase: Client, novel_name: str) -> bool:
+def create_novel(supabase: Client, novel_name: str):
     """Creates a novel entry in Supabase and returns True if successful."""
     
     author = get_current_user(supabase)
@@ -67,10 +68,76 @@ def create_novel(supabase: Client, novel_name: str) -> bool:
 
         # Check if Supabase successfully returned the inserted row
         if response.data:
-            return True
-        return False
+            return response.data
 
     except Exception as e:
         print(f"There is a problem with data insertion: {e}")
         return False
 
+async def create_chapter(supabase:Client, chapter_name:str, novel_id:str,content:str, max_tokens:int = 1000) -> bool:
+    """Add chapter to the database"""
+
+    author = get_current_user(supabase)
+
+    if not author:
+        raise ValueError("The author isn't verified.")
+
+    
+    try:
+        #Verifying if the novel exist or not
+        is_novel = (
+            supabase
+            .table("novels")
+            .select("novel_id")
+            .eq("novel_id", novel_id)
+            .eq("author_id", author.id)
+            .single()
+            .execute()
+            )
+        if not is_novel.data:
+            raise ValueError("The novel doesn't exist in the database.")
+
+        # Estimate token count (~1 token per 0.75 words)
+        words = content.split()
+        estimated_tokens = int(len(words) / 0.75)
+        
+        if estimated_tokens > max_tokens:
+            raise ValueError(
+                f"Chapter exceeds token budget. Estimated {estimated_tokens} tokens (limit is {max_tokens})."
+            )
+        try:
+            print("Getting embedding...")
+            content_embedding = await get_embeddings(content)
+            print("Done!")
+        except Exception as e:
+            print(f"something is wrong with getting embedding:{e}")
+                                
+        
+
+        response = supabase.table("chapters").insert({
+            "novel_id":novel_id,
+            "chapter_name": chapter_name,
+            "chapter_content": content,
+            "chapter_content_embedding":content_embedding
+        }).execute()
+
+        return bool(response.data)
+    except Exception as e:
+        print(f"There is an error:{e}")    
+        return False
+
+
+
+async def vector_search(supabase:Client, novel_id:str, query:str, top_k:int = 3):
+    query_embedding = get_embeddings(query)
+
+    response = supabase.rpc(
+        "match_chapters",
+        {
+            "query_embedding": query_embedding,
+        "match_count": top_k,
+        "filter_novel_id": novel_id
+        }
+    ).execute()
+
+    return response.data

@@ -1,6 +1,6 @@
 import streamlit as st
-from tools.supabase import init_supabase,user_sign_in, user_sign_up, get_current_user, create_novel
-from agent.agent import get_response
+from tools.supabase import init_supabase,user_sign_in, user_sign_up, get_current_user, create_novel, create_chapter,vector_search
+from agent.agent import get_response, get_embeddings
 
 supabase = init_supabase() #The supabase client object
 
@@ -88,6 +88,7 @@ def novel_list_page():
         if "selected_chapter" not in st.session_state:
             st.session_state.selected_chapter = None
 
+        #what happens after selected chapter found. for now this logic is handled by app.py
         if st.session_state.selected_chapter is not None:
             selected_chapter = st.session_state.selected_chapter
             with st.container(border=True):
@@ -99,21 +100,44 @@ def novel_list_page():
         else:
             for i, chapter in enumerate(chapters,start=1):
                 with st.container(border=True):
-                    st.title(chapter["name"])
+                    st.title(chapter["chapter_name"])
                     st.write(f"Total length:{len(chapter["chapter_content"])}")
                     if st.button(label="Open",key=f"chapter {i} button"):
                         st.session_state.selected_chapter = chapter
                         st.rerun()
                         
-
+            #create a new chapter
             with st.container(border=True):
                 st.title("Create a new chapter")
                 chapter_name = st.text_input("chapter name")
 
-                if not chapter_name:
-                    st.warning("Please enter a name")
+                uploaded_file = st.file_uploader("upload chapter .txt file here",type=["txt"])
+                if uploaded_file is not None:
+                    chapter_content = uploaded_file.read().decode("utf-8")
+                else:
+                    chapter_content = ""
+                
+                
+                if st.button("Create a new chapter"):
 
-                pass #for later
+                    
+
+                    if not chapter_name:
+                        st.warning("Please enter a name")
+                    if not chapter_content:
+                        st.warning("Please write something!")
+                    
+                    import asyncio
+                    response = asyncio.run(create_chapter(supabase,
+                                            chapter_name=chapter_name,
+                                            novel_id=the_novel["novel_id"],
+                                            content=chapter_content
+                                            ))
+                    if response:
+                        st.toast("chapter embedding is done!")
+                        st.rerun()
+
+                
                 
 
         
