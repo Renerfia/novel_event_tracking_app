@@ -11,7 +11,10 @@ response_agent = Agent(
 
 )
 
-
+summary_agent = Agent(
+    model="groq:openai/gpt-oss-120b",
+    instructions="You are a summary agent. You will summarize large novel chapter or text into short summary not more than 700 words. The summary should contain usefull info from the large text."
+)
 
 # Embedding model and its  settings
 settings = EmbeddingSettings(dimensions=768)
@@ -20,6 +23,13 @@ model = GoogleEmbeddingModel(
     settings=settings
 )
 embedding_agent = Embedder(model)
+
+def get_full_prompt(user_query: str, memories) -> str:
+    joined_memories = "".join(
+        f"memory-{i} contains:content:{memory["chapter_content"]},similarity_score:{memory["similarity"]}\n"
+        for i, memory in enumerate(memories, start=1)
+    )
+    return f"Question:{user_query}\n\nmemories:\n{joined_memories}"
 
 def get_response(text:str)->str:
     """Get response from LLM"""
@@ -36,4 +46,7 @@ async def get_embeddings(text:str):
 
     return embeddings.embeddings[0]
 
-def get_summary()
+async def get_summary(text:str)->str:
+    response = await summary_agent.run(text)
+    return response.output
+

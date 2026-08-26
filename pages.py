@@ -1,7 +1,7 @@
 import streamlit as st
 from tools.supabase import init_supabase,user_sign_in, user_sign_up, get_current_user, create_novel, create_chapter,vector_search
-from agent.agent import get_response, get_embeddings
-
+from agent.agent import get_response, get_embeddings,get_summary,get_full_prompt
+import asyncio
 supabase = init_supabase() #The supabase client object
 
 def login_page():
@@ -42,6 +42,9 @@ def login_page():
 
 def novel_list_page():
 
+    if st.button("back.."):
+        st.session_state.selected_novel = None
+        st.rerun()
     user = st.session_state.user
 
     #user verification
@@ -114,37 +117,29 @@ def novel_list_page():
                 uploaded_file = st.file_uploader("upload chapter .txt file here",type=["txt"])
                 if uploaded_file is not None:
                     chapter_content = uploaded_file.read().decode("utf-8")
+                    summarized_content = asyncio.run(get_summary(chapter_content))
+
                 else:
-                    chapter_content = ""
+                    summarized_content = ""
+                    st.warning("chapter can't be empty")
                 
                 
                 if st.button("Create a new chapter"):
 
-                    
-
                     if not chapter_name:
                         st.warning("Please enter a name")
-                    if not chapter_content:
-                        st.warning("Please write something!")
                     
-                    import asyncio
+                    #embedding happens inside the create_chapter function
                     response = asyncio.run(create_chapter(supabase,
                                             chapter_name=chapter_name,
                                             novel_id=the_novel["novel_id"],
-                                            content=chapter_content
+                                            content=summarized_content
                                             ))
                     if response:
                         st.toast("chapter embedding is done!")
                         st.rerun()
 
                 
-                
-
-        
-
-
-        
-
     else:
         # Display novels as cards/list items if not selected_novel
         for novel in novels:
@@ -175,6 +170,10 @@ def novel_list_page():
 def chat_page():
     """The main chat interface or page"""
 
+    if st.button("Back.."):
+        st.session_state.selected_chapter = None
+        st.rerun()
+
     user = st.session_state.user
 
     if not user:
@@ -199,7 +198,10 @@ def chat_page():
             st.write(user_message)
 
         #LLM response
-        
+        the_novel = st.session_state.selected_novel
+        memories = asyncio.run(vector_search(supabase=supabase,novel_id=the_novel["novel_id"],query=user_message))
+        print(f"The memories:\n{memories}")
+        full_prompt = get_full_prompt(user_query=user_message,memories=memories)
         with st.chat_message("assistant"):
-            response = get_response(user_message)
+            response = get_response(full_prompt)
             st.write(response)

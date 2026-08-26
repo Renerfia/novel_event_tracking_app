@@ -110,7 +110,10 @@ async def create_chapter(supabase:Client, chapter_name:str, novel_id:str,content
             content_embedding = await get_embeddings(content)
             print("Done!")
         except Exception as e:
-            print(f"something is wrong with getting embedding:{e}")
+            raise RuntimeError(f"Failed to generate embedding: {e}") from e
+
+        if not content_embedding:
+            raise ValueError("Embedding generation returned an empty vector.")
                                 
         
 
@@ -124,12 +127,12 @@ async def create_chapter(supabase:Client, chapter_name:str, novel_id:str,content
         return bool(response.data)
     except Exception as e:
         print(f"There is an error:{e}")    
-        return False
+        raise
 
 
 
 async def vector_search(supabase:Client, novel_id:str, query:str, top_k:int = 3):
-    query_embedding = get_embeddings(query)
+    query_embedding = await get_embeddings(query)
 
     response = supabase.rpc(
         "match_chapters",

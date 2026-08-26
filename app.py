@@ -1,7 +1,8 @@
 import streamlit as st
 from pages import login_page,chat_page, novel_list_page
+import nest_asyncio
 
-
+nest_asyncio.apply()
 if "user" not in st.session_state:
     st.session_state.user = None
 if "selected_novel" not in st.session_state:
