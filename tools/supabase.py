@@ -48,13 +48,14 @@ def get_current_user(supabase:Client):
     print("Current User:", response)
     return response.user
 
-def logout(supabase:Client)->bool:
-    sign_out = supabase.auth.sign_out()
-    if sign_out:
+def logout(supabase: Client) -> bool:
+    try:
+        supabase.auth.sign_out()
         print("Logged out successfully!")
-
         return True
-    return False
+    except Exception as error:
+        print(f"Logout failed: {error}")
+        return False
 
 
 
@@ -95,7 +96,7 @@ def delete_novel(supabase:Client, author_id:str, novel_id:str)->bool:
 
     print("requested:", novel_id, author_id)
     print("found:", check.data)
-    
+
     response = (supabase.table("novels")
                 .delete()
                 .eq("novel_id",novel_id)
@@ -161,8 +162,6 @@ async def create_chapter(supabase:Client, chapter_name:str, novel_id:str,content
     except Exception as e:
         print(f"There is an error:{e}")    
         raise
-
-
 
 async def vector_search(supabase:Client, novel_id:str, query:str, top_k:int = 3):
     query_embedding = await get_embeddings(query)

@@ -20,18 +20,11 @@ if "selected_novel" not in st.session_state:
 if "selected_chapter" not in st.session_state:
     st.session_state.selected_chapter = None
 
- #handles logout logic
-logout_status = False
-if st.button("Logout"):
-    logout_status = logout(supabase=supabase)
-    
-    if logout_status:
-        st.session_state.user = None
-        st.rerun()
+
     
         
 
-if st.session_state.user is None or logout_status:
+if st.session_state.user is None :
     pg = st.navigation([st.Page(login_page,title="login")],)
 
 else:
