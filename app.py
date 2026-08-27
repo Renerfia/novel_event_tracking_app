@@ -10,7 +10,11 @@ supabase = init_supabase()
 
 
 if "user" not in st.session_state:
-    st.session_state.user = get_current_user(supabase)    
+    current_user = get_current_user(supabase)
+    if current_user:
+        st.session_state.user = current_user
+    else:
+        st.session_state.user = None    
 if "selected_novel" not in st.session_state:
     st.session_state.selected_novel = None
 if "selected_chapter" not in st.session_state:

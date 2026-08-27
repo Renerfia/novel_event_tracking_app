@@ -47,11 +47,8 @@ def novel_list_page():
         st.session_state.selected_novel = None
         st.rerun()
 
-    user = get_current_user(supabase=supabase)
 
-    if not user:
-        st.session_state.user = None
-        
+    user = st.session_state.user
    
 
     #user verification
@@ -155,8 +152,11 @@ def novel_list_page():
                 st.subheader(novel["novel_name"])
 
                 with st.popover("⋮"):
-                    if st.button("Delete"):
-                        status = delete_novel(supabase=supabase,novel_id=novel["novel_id"],author_id=novel["author_id"])
+                    if st.button("Delete",key=f"delete button for novel_id:{novel['novel_id']}"):
+                        status = delete_novel(supabase=supabase,novel_id=novel['novel_id'],author_id=user.id)
+                        if status:
+                            st.toast(f"{novel['novel_name']} has been deleted")
+                            st.rerun()
 
                 #opens the novel
                 if st.button(

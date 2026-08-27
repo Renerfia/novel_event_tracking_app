@@ -13,7 +13,7 @@ response_agent = Agent(
 
 summary_agent = Agent(
     model="groq:openai/gpt-oss-120b",
-    instructions="You are a summary agent. You will summarize large novel chapter or text into short summary not more than 700 words. The summary should contain usefull info from the large text."
+    instructions="You are a summary agent. You will summarize large novel chapter or text into short summary not more than 700 words. The summary should contain useful info from the large text."
 )
 
 # Embedding model and its  settings

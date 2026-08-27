@@ -86,14 +86,26 @@ def create_novel(supabase: Client, novel_name: str):
 
 def delete_novel(supabase:Client, author_id:str, novel_id:str)->bool:
     """Deletes novel on the novels database"""
+    check = (
+    supabase.table("novels")
+    .select("novel_id, author_id")
+    .eq("novel_id", novel_id)
+    .execute()
+)
 
+    print("requested:", novel_id, author_id)
+    print("found:", check.data)
+    
     response = (supabase.table("novels")
                 .delete()
                 .eq("novel_id",novel_id)
                 .eq("author_id",author_id)
                 .execute())
-    if not response.data:
-        return False
+    print(f"DELETION:{response.data}")
+
+    if response.data == []:
+        print(f"delete_novel response:{response}")
+    return bool(response.data)
 
 async def create_chapter(supabase:Client, chapter_name:str, novel_id:str,content:str, max_tokens:int = 1000) -> bool:
     """Add chapter to the database"""
