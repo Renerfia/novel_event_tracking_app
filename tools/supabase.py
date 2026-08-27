@@ -7,7 +7,7 @@ load_dotenv()
 
 url:str = str(os.environ.get("SUPABASE_URL"))
 public_key:str = str(os.environ.get("SUPABASE_PUBLIC_KEY"))
-admin_key:str = str(os.environ.get("SUPABASE_PRIVATE_KEY"))
+
 
 @st.cache_resource
 def init_supabase()->Client:
@@ -41,13 +41,23 @@ def user_sign_in(supabase:Client,email,password):
 
 def get_current_user(supabase:Client):
     """Returns user object"""
+    session = supabase.auth.get_session()
+    if not session:
+        return None
     response = supabase.auth.get_user()
     print("Current User:", response)
     return response.user
 
-def logout(supabase:Client):
-    supabase.auth.sign_out()
-    print("Logged out successfully!")
+def logout(supabase:Client)->bool:
+    sign_out = supabase.auth.sign_out()
+    if sign_out:
+        print("Logged out successfully!")
+
+        return True
+    return False
+
+
+
 #End
 
 def create_novel(supabase: Client, novel_name: str):
@@ -72,6 +82,17 @@ def create_novel(supabase: Client, novel_name: str):
 
     except Exception as e:
         print(f"There is a problem with data insertion: {e}")
+        return False
+
+def delete_novel(supabase:Client, author_id:str, novel_id:str)->bool:
+    """Deletes novel on the novels database"""
+
+    response = (supabase.table("novels")
+                .delete()
+                .eq("novel_id",novel_id)
+                .eq("author_id",author_id)
+                .execute())
+    if not response.data:
         return False
 
 async def create_chapter(supabase:Client, chapter_name:str, novel_id:str,content:str, max_tokens:int = 1000) -> bool:
@@ -144,3 +165,4 @@ async def vector_search(supabase:Client, novel_id:str, query:str, top_k:int = 3)
     ).execute()
 
     return response.data
+

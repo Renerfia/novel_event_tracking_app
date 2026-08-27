@@ -1,5 +1,5 @@
 import streamlit as st
-from tools.supabase import init_supabase,user_sign_in, user_sign_up, get_current_user, create_novel, create_chapter,vector_search
+from tools.supabase import init_supabase,user_sign_in, user_sign_up, get_current_user, create_novel, create_chapter,vector_search,logout,delete_novel
 from agent.agent import get_response, get_embeddings,get_summary,get_full_prompt
 import asyncio
 supabase = init_supabase() #The supabase client object
@@ -42,14 +42,21 @@ def login_page():
 
 def novel_list_page():
 
+    #handles back button
     if st.button("back.."):
         st.session_state.selected_novel = None
         st.rerun()
-    user = st.session_state.user
+
+    user = get_current_user(supabase=supabase)
+
+    if not user:
+        st.session_state.user = None
+        
+   
 
     #user verification
     if not user:
-        st.warning("You can't access this page without login.")
+        st.warning("You can't access this page without login. Please refresh the page.")
         return
 
     if "selected_novel" not in st.session_state:
@@ -100,6 +107,7 @@ def novel_list_page():
                 st.subheader(f"The chapter name:{selected_chapter["chapter_name"]}")
                 st.write("\n",selected_chapter["chapter_content"])
 
+        #list of chapters
         else:
             for i, chapter in enumerate(chapters,start=1):
                 with st.container(border=True):
@@ -146,26 +154,35 @@ def novel_list_page():
             with st.container(border=True):
                 st.subheader(novel["novel_name"])
 
+                with st.popover("⋮"):
+                    if st.button("Delete"):
+                        status = delete_novel(supabase=supabase,novel_id=novel["novel_id"],author_id=novel["author_id"])
 
+                #opens the novel
                 if st.button(
                     "Open",
                     key=f"open_{novel['novel_id']}"
                 ):
                     st.session_state.selected_novel = novel #here we select our novel
                     st.rerun()
+                
 
         #create a new novel logic
         with st.container(border=True):
             st.subheader("Create a novel")
             new_novel_name = st.text_input("The novel name")
+
+            #the new novel create button
             if st.button("Create"):
                 if new_novel_name:
                     st.write(f"{new_novel_name} has been created!")
                     create_novel(supabase,new_novel_name)
                     st.rerun()
-
                 else:
                     st.error("Please enter a valid name")
+
+            
+
 
 def chat_page():
     """The main chat interface or page"""
@@ -174,11 +191,13 @@ def chat_page():
         st.session_state.selected_chapter = None
         st.rerun()
 
-    user = st.session_state.user
+    user = get_current_user(supabase=supabase)
+
 
     if not user:
         st.warning("You can't access this page without login.")
-
+        st.session_state.user = None
+        
     if "messages" not in st.session_state:
         st.session_state.messages = [
             {"role":"assistant", "content":f"Hello {user.email}! How can I help you?"}
@@ -189,9 +208,10 @@ def chat_page():
         with st.chat_message(message["role"]):
             st.write(message["content"])
 
-    user_message = st.chat_input("What you thinking?")
+    
 
     #handles user message
+    user_message = st.chat_input("What you thinking?")
     if user_message:
         st.session_state.messages.append({"role":"user","content":user_message})
         with st.chat_message("user"):
