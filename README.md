@@ -2,7 +2,7 @@
 **Note:This project is built for someone who likes to write novel but having hard timing remembering lore,event,character etc.**
 
 ## What it does?
-It does one thing. You copy your novel here and the AI agent reads it then save it to the database(with vector embeddings). So when yo
+It does one thing. You copy your novel here and the AI agent reads it then save it to the database(with vector embeddings). So when you ask the AI about something that remained somewere in old chapters, the AI finds it and answers accordingly.
 
 ## The project structure
 You create a novel and chapters here then the steps go like this,
