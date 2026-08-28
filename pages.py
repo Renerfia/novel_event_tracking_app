@@ -1,5 +1,5 @@
 import streamlit as st
-from tools.supabase import init_supabase,user_sign_in, user_sign_up, get_current_user, create_novel, create_chapter,vector_search,logout,delete_novel
+from tools.supabase import init_supabase,user_sign_in, user_sign_up, get_current_user, create_novel, create_chapter,vector_search,logout,delete_novel,delete_chapter
 from agent.agent import get_response, get_embeddings,get_summary,get_full_prompt
 import asyncio
 supabase = init_supabase() #The supabase client object
@@ -118,6 +118,17 @@ def novel_list_page():
                 with st.container(border=True):
                     st.title(chapter["chapter_name"])
                     st.write(f"Total length:{len(chapter["chapter_content"])}")
+
+                    #more option button
+                    with st.popover("More option"):
+                        if st.button("Delete the chapter.",key=f"delete button for chapter:{i}"):
+                            chapter_deletion_status = delete_chapter(supabase=supabase,
+                                                                     novel_id=st.session_state.selected_novel["novel_id"],
+                                                                     chapter_id=chapter["chapter_id"])
+                            if chapter_deletion_status:
+                                st.toast("chapter has been deleted.")
+                                st.rerun()
+                    #open button
                     if st.button(label="Open",key=f"chapter {i} button"):
                         st.session_state.selected_chapter = chapter
                         st.rerun()

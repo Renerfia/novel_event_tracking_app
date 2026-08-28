@@ -163,6 +163,15 @@ async def create_chapter(supabase:Client, chapter_name:str, novel_id:str,content
         print(f"There is an error:{e}")    
         raise
 
+def delete_chapter(supabase:Client,novel_id:str,chapter_id:str)->bool:
+    response = (supabase
+                .table("chapters")
+                .delete()
+                .eq("novel_id", novel_id)
+                .eq("chapter_id",chapter_id)
+                .execute())
+    return bool(response.data)
+    
 async def vector_search(supabase:Client, novel_id:str, query:str, top_k:int = 3):
     query_embedding = await get_embeddings(query)
 
