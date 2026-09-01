@@ -10,4 +10,4 @@ You create a novel and chapters here then the steps go like this,
 2. Then the embedding agent starts reading the summary and save it to the supabase cloud database.
 3. Whenever you click on any chapter you get chatbot interface where u can ask something you should remember right now from your old chapters(the ai does the vector search to find relevant data).
 
-**Remember:The AI isn't 100% correct always. It built for as an writer's own librarian**
+**Remember:The AI isn't 100% correct always. It was built for as an writer's own librarian**

@@ -1,7 +1,10 @@
 import streamlit as st
-from tools.supabase import init_supabase,user_sign_in, user_sign_up, get_current_user, create_novel, create_chapter,vector_search,logout,delete_novel,delete_chapter
+from tools.supabase import (init_supabase,user_sign_in, user_sign_up, get_current_user, create_novel, create_chapter,vector_search,logout,delete_novel,delete_chapter)
+from tools.converter import extract_epub_text
 from agent.agent import get_response, get_embeddings,get_summary,get_full_prompt
 import asyncio
+from tools.logger import log
+
 supabase = init_supabase() #The supabase client object
 
 def login_page():
@@ -17,7 +20,7 @@ def login_page():
             response = user_sign_in(supabase=supabase, email=email, password=password)
             if response and response.user:
                 st.session_state.user = response.user
-                print("Login successful!")
+                st.toast("Login successful!",icon="✅")
                 st.rerun()
             else:
                 st.write("Login failed.")
@@ -31,7 +34,7 @@ def login_page():
 
             if response and response.user:
                 st.session_state.user = response.user
-                print("Sign-up successful!")
+                st.toast("Sign-up successful!",icon="✅")
                 st.rerun()
 
             else:
@@ -68,6 +71,7 @@ def novel_list_page():
         st.session_state.selected_novel = None
 
     # Get all novels belonging to the current user
+    log("debug", f"Fetching novels for user ID: {user.id}") 
     all_novel = (
         supabase
         .table("novels")
@@ -83,7 +87,9 @@ def novel_list_page():
     #checks if author has existing novel or not
     if not novels:
         st.write("No novel has been found.")
-        
+        log("info", "No novels found for the user.")
+
+    log("info", f"Fetched {len(novels)} novels for user ID: {user.id}")
 
     #selected_novel display  logic
     if st.session_state.selected_novel is not None:
@@ -95,11 +101,13 @@ def novel_list_page():
 
         #THE CHAPTER LOGIC IS HERE
         #returns chapters of a novel
+        log("debug", f"Fetching chapters for novel ID: {novel_id}")
         chapters = supabase.table("chapters").select("*").eq("novel_id",novel_id).execute()
         chapters = chapters.data #so we get List[dict]
 
         if not chapters:
             st.write("There's no chapter of this novel.")
+            log("info", f"No chapters found for novel ID: {novel_id}")
         if "selected_chapter" not in st.session_state:
             st.session_state.selected_chapter = None
 
@@ -140,7 +148,9 @@ def novel_list_page():
 
                 uploaded_file = st.file_uploader("upload chapter .txt file here",type=["txt"])
                 if uploaded_file is not None:
-                    chapter_content = uploaded_file.read().decode("utf-8")
+                    if uploaded_file.name.endswith(".txt"):
+                        chapter_content = uploaded_file.read().decode("utf-8")
+                    
                     summarized_content = asyncio.run(get_summary(chapter_content))
 
                 else:

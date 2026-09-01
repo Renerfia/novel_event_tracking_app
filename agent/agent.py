@@ -2,6 +2,7 @@ from pydantic_ai import Agent,AgentRunError, Embedder
 from pydantic_ai.embeddings import EmbeddingSettings
 from pydantic_ai.embeddings.google import GoogleEmbeddingModel
 from dotenv import load_dotenv
+from tools.logger import log
 
 load_dotenv()
 
@@ -25,28 +26,44 @@ model = GoogleEmbeddingModel(
 embedding_agent = Embedder(model)
 
 def get_full_prompt(user_query: str, memories) -> str:
+
+    log("debug", "preparing user prompt")
     joined_memories = "".join(
         f"memory-{i} contains:content:{memory["chapter_content"]},similarity_score:{memory["similarity"]}\n"
         for i, memory in enumerate(memories, start=1)
     )
+    log("info", f"joined memories: {joined_memories}")
     return f"Question:{user_query}\n\nmemories:\n{joined_memories}"
 
 def get_response(text:str)->str:
     """Get response from LLM"""
-    response = response_agent.run_sync(text)
-
-    return response.output
+    try:
+        response = response_agent.run_sync(text)
+        log("info", f"Response from LLM: {response.output}")
+        return response.output
+    except Exception as e:
+        log("error", f"Error occurred while fetching response: {e}")
+        raise 
 
 async def get_embeddings(text:str):
     """Get embeddings of text"""
 
+    
     text = text.strip()
+    log("debug", f"Getting embeddings for text: {text}")
     print("Getting embeddings...")
-    embeddings = await embedding_agent.embed_query(text)
-
-    return embeddings.embeddings[0]
+    try:
+        embeddings = await embedding_agent.embed_query(text)
+        return embeddings.embeddings[0]
+    except Exception as e:
+        log("error", f"Error occurred while fetching embeddings: {e}")
+        raise
 
 async def get_summary(text:str)->str:
-    response = await summary_agent.run(text)
-    return response.output
-
+    log("debug", f"Getting summary for text: {text}")
+    try:
+        response = await summary_agent.run(text)
+        return response.output
+    except Exception as e:
+        log("error", f"Error occurred while fetching summary: {e}")
+        raise
