@@ -193,7 +193,7 @@ def novel_list_page():
                             if summarized_chunks == "":
                                 st.warning("Summarization failed. Please check the logs for more details.")
                                 log("error","Summarization failed. No summarized content generated.")
-
+                            
                     
                     #embedding happens inside the create_chapter function
                     response = asyncio.run(create_chapter(supabase,
