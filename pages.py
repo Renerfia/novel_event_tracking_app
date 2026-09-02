@@ -4,6 +4,7 @@ from tools.converter import extract_epub_text
 from agent.agent import get_response, get_embeddings,get_summary,get_full_prompt
 import asyncio
 from tools.logger import log
+from tools.chunk import chunk_text
 
 supabase = init_supabase() #The supabase client object
 
@@ -141,33 +142,64 @@ def novel_list_page():
                         st.session_state.selected_chapter = chapter
                         st.rerun()
                         
-            #create a new chapter
+            #CREATE NEW CHAPTER LOGIC
             with st.container(border=True):
                 st.title("Create a new chapter")
                 chapter_name = st.text_input("chapter name")
 
+                #UPLOADED FILE LOGIC
                 uploaded_file = st.file_uploader("upload chapter .txt file here",type=["txt"])
-                if uploaded_file is not None:
-                    if uploaded_file.name.endswith(".txt"):
-                        chapter_content = uploaded_file.read().decode("utf-8")
-                    
-                    summarized_content = asyncio.run(get_summary(chapter_content))
-
-                else:
-                    summarized_content = ""
-                    st.warning("chapter can't be empty")
+                
                 
                 
                 if st.button("Create a new chapter"):
 
                     if not chapter_name:
                         st.warning("Please enter a name")
+
+                    if uploaded_file is not None:
+                    
+                        log("info",f"Uploaded file name: {uploaded_file.name}")
+                        st.toast("Reading the uploaded file...")
+                    
+                        if uploaded_file.name.endswith(".txt"):
+                            chapter_content = uploaded_file.read().decode("utf-8")
+                    
+                            chapter_size = len(chapter_content) #getting the size of the chapter
+                            log("info",f"Size of the chapter is: {chapter_size} characters")
+                    
+                                            #chunking if the chapter size is greater than 5000 characters
+                            if  not chapter_size > 5000:
+                                chunks = [chapter_content]
+                    
+                            st.toast("Chunking the chapter content...")
+                            log("info","Chunking the chapter content...")
+                            chunks = chunk_text(chapter_content,chunk_size=5000)
+                    
+                            log("info",f"Total chunks created: {len(chunks)}")
+                    
+                            summarized_chunks = ""
+                    
+                            st.toast("Starting to summarize each chunk...")
+                            log("debug","Starting to summarize each chunk...")
+                            for i,chunk in enumerate(chunks,start=1):
+                                log("info",f"Processing chunk {i}...")
+                                summarized_chunk = asyncio.run(get_summary(chunk))
+
+                                summarized_chunks += summarized_chunk + "\n"
+
+                                log("info",f"Chunk {i} summarized successfully.")
+
+                            if summarized_chunks == "":
+                                st.warning("Summarization failed. Please check the logs for more details.")
+                                log("error","Summarization failed. No summarized content generated.")
+
                     
                     #embedding happens inside the create_chapter function
                     response = asyncio.run(create_chapter(supabase,
                                             chapter_name=chapter_name,
                                             novel_id=the_novel["novel_id"],
-                                            content=summarized_content
+                                            content=summarized_chunks
                                             ))
                     if response:
                         st.toast("chapter embedding is done!")

@@ -1,20 +1,21 @@
-from pydantic_ai import Agent,AgentRunError, Embedder
+from pydantic_ai import Agent,AgentRunError, Embedder,ModelHTTPError
 from pydantic_ai.embeddings import EmbeddingSettings
 from pydantic_ai.embeddings.google import GoogleEmbeddingModel
 from dotenv import load_dotenv
 from tools.logger import log
+import asyncio
 
 load_dotenv()
 
 response_agent = Agent(
-    model="google:gemini-3.6-flash",
+    model="google:gemini-3.5-flash-lite",
     instructions="You are a novel assistant. Your work is to read the 'memory' section give correct answer to the user."
 
 )
 
 summary_agent = Agent(
     model="groq:openai/gpt-oss-120b",
-    instructions="You are a summary agent. You will summarize large novel chapter or text into short summary not more than 700 words. The summary should contain useful info from the large text."
+    instructions="You are a summary agent. You will summarize large novel chapter or text into short summary not more than 500 words. The summary should contain useful info from the large text."
 )
 
 # Embedding model and its  settings
@@ -49,7 +50,6 @@ async def get_embeddings(text:str):
     """Get embeddings of text"""
 
     
-    text = text.strip()
     log("debug", f"Getting embeddings for text: {text}")
     print("Getting embeddings...")
     try:
@@ -66,4 +66,7 @@ async def get_summary(text:str)->str:
         return response.output
     except Exception as e:
         log("error", f"Error occurred while fetching summary: {e}")
+        if "429" in str(e):
+            log("error", "Rate limit exceeded. Please try again later.")
+            await asyncio.sleep(2)
         raise
