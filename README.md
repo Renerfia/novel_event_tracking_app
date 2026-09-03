@@ -6,6 +6,7 @@ It does one thing. You copy your novel here and the AI agent reads it then save 
 
 ## The chatbot answering correctly about my novel
 ![Alt Text](img/reply.png)
+![Alt Text](img/several_questioning.png)
 
 ## The project structure
 You create a novel and chapters here then the steps go like this,
