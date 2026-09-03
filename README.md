@@ -4,6 +4,9 @@
 ## What it does?
 It does one thing. You copy your novel here and the AI agent reads it then save it to the database(with vector embeddings). So when you ask the AI about something that remained somewere in old chapters, the AI finds it and answers accordingly.
 
+## Interface
+![Alt Text](img/interface.png)
+
 ## The chatbot answering correctly about my novel
 ![Alt Text](img/reply.png)
 
