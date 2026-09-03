@@ -20,9 +20,12 @@ if "selected_novel" not in st.session_state:
 if "selected_chapter" not in st.session_state:
     st.session_state.selected_chapter = None
 
+st.sidebar.title("AI Novel Event Tracking App")
 
-    
-        
+st.sidebar.divider() # ভিজ্যুয়াল সেপারেটর বর্ডার
+
+
+st.sidebar.write(f"Welcome, {st.session_state.user.email}!")
 
 if st.session_state.user is None :
     pg = st.navigation([st.Page(login_page,title="login")],)
@@ -30,8 +33,9 @@ if st.session_state.user is None :
 else:
     pg = st.navigation([st.Page(novel_list_page,title="novel list")])
 
-    if st.session_state.selected_novel and st.session_state.selected_chapter:
-        pg = st.navigation([st.Page(chat_page,title="chat")])
+    if st.session_state.selected_novel:
+        if st.sidebar.button("Open Chatbot"):
+            pg = st.navigation([st.Page(chat_page,title="chat")])
 
 
 

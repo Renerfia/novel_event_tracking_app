@@ -48,14 +48,14 @@ def novel_list_page():
 
      #handles logout logic
     logout_status = False
-    if st.button("Logout"):
+    if st.sidebar.button("Logout"):
         logout_status = logout(supabase=supabase)
         if logout_status:
             st.session_state.user = None
             st.rerun()
             
     #handles back button
-    if st.button("back.."):
+    if st.sidebar.button("back.."):
         st.session_state.selected_novel = None
         st.rerun()
 
