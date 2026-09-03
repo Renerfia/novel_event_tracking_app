@@ -157,53 +157,54 @@ def novel_list_page():
                     if not chapter_name:
                         st.warning("Please enter a name")
 
-                    if uploaded_file is not None:
-                    
-                        log("info",f"Uploaded file name: {uploaded_file.name}")
-                        st.toast("Reading the uploaded file...")
-                    
-                        if uploaded_file.name.endswith(".txt"):
-                            chapter_content = uploaded_file.read().decode("utf-8")
-                    
-                            chapter_size = len(chapter_content) #getting the size of the chapter
-                            log("info",f"Size of the chapter is: {chapter_size} characters")
-                    
-                                            #chunking if the chapter size is greater than 5000 characters
-                            if  not chapter_size > 5000:
-                                chunks = [chapter_content]
-                    
-                            st.toast("Chunking the chapter content...")
-                            log("info","Chunking the chapter content...")
-                            chunks = chunk_text(chapter_content,chunk_size=5000)
-                    
-                            log("info",f"Total chunks created: {len(chunks)}")
-                    
-                            summarized_chunks = ""
-                    
-                            st.toast("Starting to summarize each chunk...")
-                            log("debug","Starting to summarize each chunk...")
-                            for i,chunk in enumerate(chunks,start=1):
-                                log("info",f"Processing chunk {i}...")
-                                summarized_chunk = asyncio.run(get_summary(chunk))
+                    with st.spinner("Creating a new chapter..."):
+                        if uploaded_file is not None:
+                        
+                            log("info",f"Uploaded file name: {uploaded_file.name}")
+                            st.toast("Reading the uploaded file...")
+                        
+                            if uploaded_file.name.endswith(".txt"):
+                                chapter_content = uploaded_file.read().decode("utf-8")
+                        
+                                chapter_size = len(chapter_content) #getting the size of the chapter
+                                log("info",f"Size of the chapter is: {chapter_size} characters")
+                        
+                                                #chunking if the chapter size is greater than 5000 characters
+                                if  not chapter_size > 5000:
+                                    chunks = [chapter_content]
+                        
+                                st.toast("Chunking the chapter content...")
+                                log("info","Chunking the chapter content...")
+                                chunks = chunk_text(chapter_content,chunk_size=5000)
+                        
+                                log("info",f"Total chunks created: {len(chunks)}")
+                        
+                                summarized_chunks = ""
+                        
+                                st.toast("Starting to summarize each chunk...")
+                                log("debug","Starting to summarize each chunk...")
+                                for i,chunk in enumerate(chunks,start=1):
+                                    log("info",f"Processing chunk {i}...")
+                                    summarized_chunk = asyncio.run(get_summary(chunk))
 
-                                summarized_chunks += summarized_chunk + "\n"
+                                    summarized_chunks += summarized_chunk + "\n"
 
-                                log("info",f"Chunk {i} summarized successfully.")
+                                    log("info",f"Chunk {i} summarized successfully.")
 
-                            if summarized_chunks == "":
-                                st.warning("Summarization failed. Please check the logs for more details.")
-                                log("error","Summarization failed. No summarized content generated.")
-                            
-                    
-                    #embedding happens inside the create_chapter function
-                    response = asyncio.run(create_chapter(supabase,
-                                            chapter_name=chapter_name,
-                                            novel_id=the_novel["novel_id"],
-                                            content=summarized_chunks
-                                            ))
-                    if response:
-                        st.toast("chapter embedding is done!")
-                        st.rerun()
+                                if summarized_chunks == "":
+                                    st.warning("Summarization failed. Please check the logs for more details.")
+                                    log("error","Summarization failed. No summarized content generated.")
+                                
+                        
+                        #embedding happens inside the create_chapter function
+                        response = asyncio.run(create_chapter(supabase,
+                                                chapter_name=chapter_name,
+                                                novel_id=the_novel["novel_id"],
+                                                content=summarized_chunks
+                                                ))
+                        if response:
+                            st.toast("chapter creation is done!")
+                            st.rerun()
 
                 
     else:
@@ -286,3 +287,4 @@ def chat_page():
         with st.chat_message("assistant"):
             response = get_response(full_prompt)
             st.write(response)
+            st.session_state.messages.append({"role":"assistant","content":response})
