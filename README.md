@@ -1,8 +1,10 @@
-# The AI Novel Tracking Project
+# NovelMind - Let AI understand your Novel
 **Note:This project is built for someone who likes to write novel but having hard timing remembering lore,event,character etc.**
 
 ## What it does?
 It does one thing. You copy your novel here and the AI agent reads it then save it to the database(with vector embeddings). So when you ask the AI about something that remained somewere in old chapters, the AI finds it and answers accordingly.
+
+### The project link:https://noveleventtrackingapp-3xzd6mktkyyz48s8n4i2ma.streamlit.app
 
 ## Interface
 ![Alt Text](img/interface.png)
