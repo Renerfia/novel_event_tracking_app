@@ -20,7 +20,7 @@ if "selected_novel" not in st.session_state:
 if "selected_chapter" not in st.session_state:
     st.session_state.selected_chapter = None
 
-st.sidebar.title("AI Novel Event Tracking App")
+st.sidebar.title("NovelMind")
 
 st.sidebar.divider() # ভিজ্যুয়াল সেপারেটর বর্ডার
 
