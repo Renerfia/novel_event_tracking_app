@@ -25,12 +25,13 @@ st.sidebar.title("NovelMind")
 st.sidebar.divider() # ভিজ্যুয়াল সেপারেটর বর্ডার
 
 
-st.sidebar.write(f"Welcome, {st.session_state.user.email}!")
+
 
 if st.session_state.user is None :
     pg = st.navigation([st.Page(login_page,title="login")],)
 
 else:
+    st.sidebar.write(f"Welcome, {st.session_state.user.email}!")
     pg = st.navigation([st.Page(novel_list_page,title="novel list")])
 
     if st.session_state.selected_novel:

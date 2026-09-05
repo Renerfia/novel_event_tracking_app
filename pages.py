@@ -1,5 +1,5 @@
 import streamlit as st
-from tools.supabase import (init_supabase,user_sign_in, user_sign_up, get_current_user, create_novel, create_chapter,vector_search,logout,delete_novel,delete_chapter)
+from tools.supabase import (init_supabase,user_sign_in, user_sign_up, get_current_user, create_novel, create_chapter,vector_search,logout,delete_novel,delete_chapter,)
 from tools.converter import extract_epub_text
 from agent.agent import get_response, get_embeddings,get_summary,get_full_prompt
 import asyncio
@@ -112,7 +112,7 @@ def novel_list_page():
         if "selected_chapter" not in st.session_state:
             st.session_state.selected_chapter = None
 
-        #what happens after selected chapter found. for now this logic is handled by app.py
+        #what happens after selected chapter found. 
         if st.session_state.selected_chapter is not None:
             selected_chapter = st.session_state.selected_chapter
             with st.container(border=True):
@@ -138,7 +138,7 @@ def novel_list_page():
                                 st.toast("chapter has been deleted.")
                                 st.rerun()
                     #open button
-                    if st.button(label="Open",key=f"chapter {i} button"):
+                    if st.button(label="Open AI summarization",key=f"chapter {i} button"):
                         st.session_state.selected_chapter = chapter
                         st.rerun()
                         
@@ -288,3 +288,15 @@ def chat_page():
             response = get_response(full_prompt)
             st.write(response)
             st.session_state.messages.append({"role":"assistant","content":response})
+
+def selected_chapter_page():
+    """The page that displays the selected chapter"""
+
+    if st.button("Back.."):
+        st.session_state.selected_chapter = None
+        st.rerun()
+
+    selected_chapter = st.session_state.selected_chapter
+    with st.container(border=True):
+        st.subheader(f"The chapter name:{selected_chapter['chapter_name']}")
+        st.write("\n",selected_chapter["chapter_content"])
