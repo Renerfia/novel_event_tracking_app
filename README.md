@@ -14,6 +14,9 @@ It does one thing. You copy your novel here and the AI agent reads it then save 
 
 ![Alt Text](img/several_questioning.png)
 
+## You can see what AI summarized your chapter
+![Alt Text](img/summarization.png)
+
 ## The project structure
 You create a novel and chapters here then the steps go like this,
 1. Summary Agent reads your chapter whenever you insert them as .txt file(docx,pdf will be supported in later version). This summary agent plays the most crucial role in this project. It reads your long chapter and gets the necessary info and put them together as a summary.
