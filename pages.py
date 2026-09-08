@@ -251,6 +251,7 @@ def chat_page():
 
     if st.button("Back.."):
         st.session_state.selected_chapter = None
+        st.session_state.current_page = "novel_list"
         st.rerun()
 
     user = get_current_user(supabase=supabase)
