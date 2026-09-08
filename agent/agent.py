@@ -1,17 +1,55 @@
-from pydantic_ai import Agent,AgentRunError, Embedder,ModelHTTPError
+from pydantic_ai import Agent,AgentRunError, Embedder,ModelHTTPError,RunContext
 from pydantic_ai.embeddings import EmbeddingSettings
 from pydantic_ai.embeddings.google import GoogleEmbeddingModel
 from dotenv import load_dotenv
 from tools.logger import log
 import asyncio
+from supabase import Client
+
+
+from dataclasses import dataclass
+
+
 
 load_dotenv()
 
+#response agent and its functions
+@dataclass
+class ChatDeps:
+    supabase: Client
+    novel_id: str
+
 response_agent = Agent(
     model="google:gemini-3.5-flash-lite",
-    instructions="You are a novel assistant. Your work is to read the 'memory' section give correct answer to the user."
-
+    instructions="You are a novel assistant. Your work is to answer user queries about the novel. You will answer the user queries based on the novel content and your knowledge. If you don't know the answer, you will say 'I don't know'. You will not make up answers.",
+    deps_type = ChatDeps
 )
+
+#tools for response agent
+@response_agent.tool
+async def search_novel_memory(
+    ctx: RunContext[ChatDeps],
+    query: str,
+) -> str:
+    """Search the selected novel for relevant memories."""
+
+    from tools.supabase import vector_search
+    log("info", f"response_agent called search_novel_memory tool with query: {query}")
+    memories = await vector_search(
+        supabase=ctx.deps.supabase,
+        novel_id=ctx.deps.novel_id,
+        query=query,
+        top_k=3,
+    )
+
+    if not memories:
+        return "No relevant novel memory was found."
+
+    return "\n".join(
+        f"Content: {memory['chapter_content']}\n"
+        f"Similarity: {memory['similarity']}"
+        for memory in memories
+    )
 
 summary_agent = Agent(
     model="groq:openai/gpt-oss-120b",
@@ -26,25 +64,29 @@ model = GoogleEmbeddingModel(
 )
 embedding_agent = Embedder(model)
 
-def get_full_prompt(user_query: str, memories) -> str:
+def get_full_prompt(user_query: str,message_history:list[dict]) -> str:
 
-    log("debug", "preparing user prompt")
-    joined_memories = "".join(
-        f"memory-{i} contains:content:{memory["chapter_content"]},similarity_score:{memory["similarity"]}\n"
-        for i, memory in enumerate(memories, start=1)
+    """Construct the full prompt for the response agent."""
+    
+    message_history = message_history[-5:]  # Keep only the last 5 messages
+    history_str = "\n".join(
+       f"{msg['role']}: {msg['content']}" for msg in message_history
     )
-    log("info", f"joined memories: {joined_memories}")
-    return f"Question:{user_query}\n\nmemories:\n{joined_memories}"
 
-def get_response(text:str)->str:
-    """Get response from LLM"""
-    try:
-        response = response_agent.run_sync(text)
-        log("info", f"Response from LLM: {response.output}")
-        return response.output
-    except Exception as e:
-        log("error", f"Error occurred while fetching response: {e}")
-        raise 
+    full_prompt = (
+        f"User query: {user_query}\n"
+        f"Message History:\n{history_str}\n")
+    return full_prompt
+
+#def get_response(text:str)->str:
+    #"""Get response from LLM"""
+    #try:
+        #response = response_agent.run_sync(text)
+        #log("info", f"Response from LLM: {response.output}")
+        #return response.output
+    #except Exception as e:
+        #log("error", f"Error occurred while fetching response: {e}")
+        #raise 
 
 async def get_embeddings(text:str):
     """Get embeddings of text"""

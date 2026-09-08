@@ -1,10 +1,12 @@
 import streamlit as st
-from tools.supabase import (init_supabase,user_sign_in, user_sign_up, get_current_user, create_novel, create_chapter,vector_search,logout,delete_novel,delete_chapter,)
+from tools.supabase import (init_supabase,user_sign_in, user_sign_up, get_current_user, create_novel, create_chapter,logout,delete_novel,delete_chapter,)
 from tools.converter import extract_epub_text
-from agent.agent import get_response, get_embeddings,get_summary,get_full_prompt
+from agent.agent import  get_summary,get_full_prompt
+from agent.agent import ChatDeps, response_agent
 import asyncio
 from tools.logger import log
 from tools.chunk import chunk_text
+
 
 supabase = init_supabase() #The supabase client object
 
@@ -280,15 +282,18 @@ def chat_page():
         with st.chat_message("user"):
             st.write(user_message)
 
-        #LLM response
+        #setting up deps for agent tool calling
+        
         the_novel = st.session_state.selected_novel
-        memories = asyncio.run(vector_search(supabase=supabase,novel_id=the_novel["novel_id"],query=user_message))
-        print(f"The memories:\n{memories}")
-        full_prompt = get_full_prompt(user_query=user_message,memories=memories)
+        deps = ChatDeps(supabase=supabase, novel_id=the_novel["novel_id"])
+
+        #LLM response
+        
+        full_prompt = get_full_prompt(user_query=user_message,message_history=st.session_state.messages)
         with st.chat_message("assistant"):
-            response = get_response(full_prompt)
-            st.write(response)
-            st.session_state.messages.append({"role":"assistant","content":response})
+            response = asyncio.run(response_agent.run(full_prompt,deps=deps))
+            st.write(response.output)
+            st.session_state.messages.append({"role":"assistant","content":response.output})
 
 def selected_chapter_page():
     """The page that displays the selected chapter"""
